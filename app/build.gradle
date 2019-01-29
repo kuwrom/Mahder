@@ -1,0 +1,64 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion 26
+    defaultConfig {
+        applicationId "com.habeshastudio.mahder"
+        minSdkVersion 21
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.firebase:firebase-auth:11.4.0'
+
+    //    implementation 'com.android.support:support-v4:26.1.0'
+    implementation 'com.google.firebase:firebase-database:11.4.0'
+    implementation 'com.google.firebase:firebase-storage:11.4.0'
+    implementation 'com.google.firebase:firebase-core:11.4.0'
+    implementation 'com.google.firebase:firebase-messaging:11.4.0'
+    implementation 'com.firebaseui:firebase-ui-database:1.2.0'
+
+    //compressor
+    implementation 'id.zelory:compressor:2.1.0'
+
+    //picaso
+    implementation 'com.squareup.picasso:picasso:2.5.2'
+    implementation 'com.squareup.okhttp:okhttp:2.5.0'
+
+    //Image crop
+    implementation 'com.theartofdev.edmodo:android-image-cropper:2.4.+'
+
+    //circle image view library
+    implementation 'de.hdodenhof:circleimageview:2.2.0'
+
+    implementation 'com.github.lguipeng:BubbleView:1.0.1'
+
+    //------------------------------------
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:26.0.0-beta1'
+    implementation 'com.android.support:design:26.0.0-beta1'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:0.5'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:2.2.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    implementation 'com.android.support:cardview-v7:26.0.0-beta1'
+}
+
+apply plugin: 'com.google.gms.google-services'
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}

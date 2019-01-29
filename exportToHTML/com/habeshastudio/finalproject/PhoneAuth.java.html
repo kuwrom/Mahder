@@ -1,0 +1,329 @@
+<html>
+<head>
+    <title>PhoneAuth.java</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style type="text/css">
+.ln { color: #999999; font-weight: normal; font-style: normal; }
+.s0 { color: rgb(0,0,128); font-weight: bold; }
+.s1 { color: rgb(0,0,0); }
+.s2 { color: rgb(0,128,0); font-weight: bold; }
+.s3 { color: rgb(128,128,128); font-style: italic; }
+.s4 { color: rgb(0,0,255); }
+
+    </style>
+</head>
+<BODY BGCOLOR="#ffffff">
+<TABLE CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0">
+    <TR>
+        <TD>
+            <CENTER>
+                <FONT FACE="Arial, Helvetica" COLOR="#000000">
+                    PhoneAuth.java</FONT>
+            </center>
+        </TD>
+    </TR>
+</TABLE>
+<pre>
+<span class="s0">package </span><span class="s1">com.habeshastudio.finalproject; 
+ 
+</span><span class="s0">import </span><span class="s1">android.app.ProgressDialog; 
+</span><span class="s0">import </span><span class="s1">android.content.Intent; 
+</span><span class="s0">import </span><span class="s1">android.support.annotation.NonNull; 
+</span><span class="s0">import </span><span class="s1">android.support.v7.app.AppCompatActivity; 
+</span><span class="s0">import </span><span class="s1">android.os.Bundle; 
+</span><span class="s0">import </span><span class="s1">android.support.v7.widget.Toolbar; 
+</span><span class="s0">import </span><span class="s1">android.util.Log; 
+</span><span class="s0">import </span><span class="s1">android.view.View; 
+</span><span class="s0">import </span><span class="s1">android.widget.Button; 
+</span><span class="s0">import </span><span class="s1">android.widget.EditText; 
+</span><span class="s0">import </span><span class="s1">android.widget.TextView; 
+ 
+</span><span class="s0">import </span><span class="s1">com.google.android.gms.tasks.OnCompleteListener; 
+</span><span class="s0">import </span><span class="s1">com.google.android.gms.tasks.Task; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.FirebaseException; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.FirebaseTooManyRequestsException; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.auth.AuthResult; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.auth.FirebaseAuth; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.auth.FirebaseAuthInvalidCredentialsException; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.auth.FirebaseUser; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.auth.PhoneAuthCredential; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.auth.PhoneAuthProvider; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.database.DataSnapshot; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.database.DatabaseError; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.database.DatabaseReference; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.database.FirebaseDatabase; 
+</span><span class="s0">import </span><span class="s1">com.google.firebase.database.ValueEventListener; 
+ 
+</span><span class="s0">import </span><span class="s1">java.util.HashMap; 
+</span><span class="s0">import </span><span class="s1">java.util.concurrent.TimeUnit; 
+ 
+</span><span class="s0">public class </span><span class="s1">PhoneAuth </span><span class="s0">extends </span><span
+        class="s1">AppCompatActivity {
+ 
+    </span><span class="s0">private static final </span><span class="s1">String TAG = </span><span
+        class="s2">&quot;PhoneAuth&quot;</span><span class="s1">;
+ 
+    </span><span class="s0">private </span><span class="s1">Toolbar mToolbar; 
+    </span><span class="s0">private </span><span class="s1">ProgressDialog mLoginProgress; 
+ 
+ 
+    </span><span class="s0">private </span><span class="s1">EditText phoneText; 
+    </span><span class="s0">private </span><span class="s1">EditText codeText; 
+    </span><span class="s0">private </span><span class="s1">Button verifyButton; 
+    </span><span class="s0">private </span><span class="s1">Button sendButton; 
+    </span><span class="s0">private </span><span class="s1">Button resendButton; 
+    </span><span class="s0">private </span><span class="s1">Button signoutButton; 
+    </span><span class="s0">private </span><span class="s1">TextView statusText; 
+    </span><span class="s0">private boolean </span><span class="s1">isNew = </span><span class="s0">false</span><span
+        class="s1">;
+ 
+    </span><span class="s0">private </span><span class="s1">String phoneVerificationId; 
+    </span><span class="s0">private </span><span class="s1">PhoneAuthProvider.OnVerificationStateChangedCallbacks 
+            verificationCallbacks; 
+    </span><span class="s0">private </span><span class="s1">PhoneAuthProvider.ForceResendingToken resendToken; 
+ 
+    </span><span class="s0">private </span><span class="s1">FirebaseAuth fbAuth; 
+    </span><span class="s0">private </span><span class="s1">DatabaseReference mDatabase; 
+ 
+    @Override 
+    </span><span class="s0">protected void </span><span class="s1">onCreate(Bundle savedInstanceState) { 
+        </span><span class="s0">super</span><span class="s1">.onCreate(savedInstanceState); 
+        setContentView(R.layout.activity_phone_auth); 
+ 
+        phoneText = (EditText) findViewById(R.id.phoneText); 
+        codeText = (EditText) findViewById(R.id.codeText); 
+        verifyButton = (Button) findViewById(R.id.verifyButton); 
+        sendButton = (Button) findViewById(R.id.sendButton); 
+        resendButton = (Button) findViewById(R.id.resendButton); 
+        signoutButton = (Button) findViewById(R.id.signoutButton); 
+        statusText = (TextView) findViewById(R.id.statusText); 
+ 
+        </span><span class="s3">//Toolbar</span><span class="s1"> 
+        mToolbar = (Toolbar) findViewById(R.id.phone_appbar); 
+        setSupportActionBar(mToolbar); 
+        getSupportActionBar().setTitle(</span><span
+        class="s2">&quot;Stgeref Tawerawaleh&quot;</span><span class="s1">);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(</span><span class="s0">true</span><span
+        class="s1">);
+ 
+        verifyButton.setEnabled(</span><span class="s0">false</span><span class="s1">); 
+        resendButton.setEnabled(</span><span class="s0">false</span><span class="s1">); 
+        signoutButton.setEnabled(</span><span class="s0">false</span><span class="s1">); 
+        statusText.setText(</span><span class="s2">&quot;Signed Out&quot;</span><span class="s1">); 
+ 
+        fbAuth = FirebaseAuth.getInstance(); 
+ 
+ 
+    } 
+ 
+    </span><span class="s0">public void </span><span class="s1">sendCode(View view) { 
+ 
+        String phoneNumber = phoneText.getText().toString(); 
+ 
+        setUpVerificatonCallbacks(); 
+ 
+        PhoneAuthProvider.getInstance().verifyPhoneNumber( 
+                phoneNumber,        </span><span class="s3">// Phone number to verify</span><span
+        class="s1">
+                </span><span class="s4">60</span><span class="s1">,                 </span><span
+        class="s3">// Timeout duration</span><span class="s1">
+                TimeUnit.SECONDS,   </span><span class="s3">// Unit of timeout</span><span
+        class="s1">
+                </span><span class="s0">this</span><span class="s1">,               </span><span
+        class="s3">// Activity (for callback binding)</span><span class="s1">
+                verificationCallbacks); 
+    } 
+ 
+    </span><span class="s0">private void </span><span class="s1">setUpVerificatonCallbacks() { 
+ 
+        verificationCallbacks = 
+                </span><span class="s0">new </span><span class="s1">PhoneAuthProvider.OnVerificationStateChangedCallbacks() { 
+ 
+                    @Override 
+                    </span><span class="s0">public void </span><span class="s1">onVerificationCompleted( 
+                            PhoneAuthCredential credential) { 
+ 
+                        signoutButton.setEnabled(</span><span class="s0">true</span><span
+        class="s1">);
+                        statusText.setText(</span><span class="s2">&quot;Signed In&quot;</span><span
+        class="s1">);
+                        resendButton.setEnabled(</span><span class="s0">false</span><span
+        class="s1">);
+                        verifyButton.setEnabled(</span><span class="s0">false</span><span
+        class="s1">);
+                        codeText.setText(</span><span class="s2">&quot;&quot;</span><span
+        class="s1">);
+                        signInWithPhoneAuthCredential(credential); 
+                    } 
+ 
+                    @Override 
+                    </span><span class="s0">public void </span><span class="s1">onVerificationFailed(FirebaseException e) { 
+ 
+                        </span><span class="s0">if </span><span class="s1">(e </span><span
+        class="s0">instanceof </span><span class="s1">FirebaseAuthInvalidCredentialsException) {
+                            </span><span class="s3">// Invalid request</span><span class="s1"> 
+                            Log.d(TAG, </span><span
+        class="s2">&quot;Invalid credential: &quot;</span><span class="s1">
+                                    + e.getLocalizedMessage()); 
+                        } </span><span class="s0">else if </span><span class="s1">(e </span><span
+        class="s0">instanceof </span><span class="s1">FirebaseTooManyRequestsException) {
+                            </span><span class="s3">// SMS quota exceeded</span><span class="s1"> 
+                            Log.d(TAG, </span><span
+        class="s2">&quot;SMS Quota exceeded.&quot;</span><span class="s1">);
+                        } 
+                    } 
+ 
+                    @Override 
+                    </span><span class="s0">public void </span><span class="s1">onCodeSent(String verificationId, 
+                                           PhoneAuthProvider.ForceResendingToken token) { 
+ 
+                        phoneVerificationId = verificationId; 
+                        resendToken = token; 
+ 
+                        verifyButton.setEnabled(</span><span class="s0">true</span><span class="s1">); 
+                        sendButton.setEnabled(</span><span class="s0">false</span><span class="s1">); 
+                        resendButton.setEnabled(</span><span class="s0">true</span><span class="s1">); 
+                    } 
+                }; 
+    } 
+ 
+    </span><span class="s0">public void </span><span class="s1">verifyCode(View view) { 
+ 
+</span><span class="s3">//        mLoginProgress.setTitle(&quot;Logging in ...&quot;);</span><span
+        class="s1">
+</span><span class="s3">//        mLoginProgress.setMessage(&quot;Please wait while we Log you in&quot;);</span><span
+        class="s1">
+</span><span class="s3">//        mLoginProgress.setCanceledOnTouchOutside(false);</span><span
+        class="s1">
+</span><span class="s3">//        mLoginProgress.show();</span><span class="s1"> 
+ 
+        String code = codeText.getText().toString(); 
+ 
+        PhoneAuthCredential credential = 
+                PhoneAuthProvider.getCredential(phoneVerificationId, code); 
+        signInWithPhoneAuthCredential(credential); 
+ 
+ 
+    } 
+ 
+    </span><span class="s0">private void </span><span class="s1">signInWithPhoneAuthCredential(PhoneAuthCredential credential) { 
+        fbAuth.signInWithCredential(credential) 
+                .addOnCompleteListener(</span><span class="s0">this</span><span class="s1">, </span><span
+        class="s0">new </span><span class="s1">OnCompleteListener&lt;AuthResult&gt;() {
+                    @Override 
+                    </span><span class="s0">public void </span><span class="s1">onComplete(@NonNull Task&lt;AuthResult&gt; task) { 
+                        </span><span class="s0">if </span><span class="s1">(task.isSuccessful()) { 
+ 
+                            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser(); 
+                            String uId = currentUser.getUid(); 
+                            mDatabase = FirebaseDatabase.getInstance().getReference().child(</span><span
+        class="s2">&quot;Users&quot;</span><span class="s1">).child(uId);
+ 
+                            mDatabase.addValueEventListener(</span><span class="s0">new </span><span
+        class="s1">ValueEventListener() {
+                                @Override 
+                                </span><span class="s0">public void </span><span class="s1">onDataChange(DataSnapshot dataSnapshot) { 
+                                    String name = dataSnapshot.child(</span><span class="s2">&quot;name&quot;</span><span
+        class="s1">).getValue().toString();
+                                    isNew = </span><span class="s0">true</span><span class="s1">; 
+                                } 
+ 
+                                @Override 
+                                </span><span class="s0">public void </span><span class="s1">onCancelled(DatabaseError databaseError) { 
+ 
+                                } 
+                            }); 
+ 
+</span><span class="s3">//                            signoutButton.setEnabled(true);</span><span
+        class="s1">
+</span><span class="s3">//                            codeText.setText(&quot;&quot;);</span><span
+        class="s1">
+</span><span
+        class="s3">//                            statusText.setText(&quot;Signed In&quot;);</span><span
+        class="s1">
+</span><span class="s3">//                            resendButton.setEnabled(false);</span><span
+        class="s1">
+</span><span class="s3">//                            verifyButton.setEnabled(false);</span><span
+        class="s1">
+</span><span class="s3">//                            FirebaseUser user = task.getResult().getUser();</span><span
+        class="s1">
+                            </span><span class="s0">if</span><span class="s1">(isNew){ 
+ 
+                                String display_name = </span><span
+        class="s2">&quot;No Name&quot;</span><span class="s1">;
+ 
+                                HashMap&lt;String, String&gt; userMap = </span><span
+        class="s0">new </span><span class="s1">HashMap&lt;&gt;();
+                                userMap.put(</span><span class="s2">&quot;name&quot;</span><span
+        class="s1">, display_name);
+                                userMap.put(</span><span class="s2">&quot;status&quot;</span><span
+        class="s1">, </span><span class="s2">&quot;Unknown Profession&quot;</span><span class="s1">);
+                                userMap.put(</span><span class="s2">&quot;image&quot;</span><span
+        class="s1">, </span><span class="s2">&quot;default&quot;</span><span class="s1">);
+                                userMap.put(</span><span
+        class="s2">&quot;thumb_image&quot;</span><span class="s1">, </span><span class="s2">&quot;default&quot;</span><span
+        class="s1">);
+                                mDatabase.setValue(userMap).addOnCompleteListener(</span><span
+        class="s0">new </span><span class="s1">OnCompleteListener&lt;Void&gt;() {
+                                    @Override 
+                                    </span><span class="s0">public void </span><span class="s1">onComplete(@NonNull Task&lt;Void&gt; task) { 
+ 
+                                        </span><span class="s0">if</span><span class="s1">(task.isSuccessful()){ 
+                                            Intent mainIntent = </span><span
+        class="s0">new </span><span class="s1">Intent(PhoneAuth.</span><span
+        class="s0">this</span><span class="s1">, MainActivity.</span><span
+        class="s0">class</span><span class="s1">);
+                                            mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); 
+                                            startActivity(mainIntent); 
+                                            finish(); 
+                                        } 
+                                    } 
+                                }); 
+ 
+                            } 
+                            </span><span class="s0">else</span><span class="s1">{ 
+                                Intent mainIntent =  </span><span class="s0">new </span><span
+        class="s1">Intent(PhoneAuth.</span><span class="s0">this</span><span class="s1">, MainActivity.</span><span
+        class="s0">class</span><span class="s1">);
+                                mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); 
+                                startActivity(mainIntent); 
+                                finish(); 
+                            } 
+ 
+                        } </span><span class="s0">else </span><span class="s1">{ 
+                            </span><span class="s0">if </span><span
+        class="s1">(task.getException() </span><span class="s0">instanceof</span><span class="s1">
+                                    FirebaseAuthInvalidCredentialsException) { 
+                                </span><span
+        class="s3">// The verification code entered was invalid</span><span class="s1">
+                            } 
+                        } 
+                    } 
+                }); 
+    } 
+ 
+    </span><span class="s0">public void </span><span class="s1">resendCode(View view) { 
+ 
+        String phoneNumber = phoneText.getText().toString(); 
+ 
+        setUpVerificatonCallbacks(); 
+ 
+        PhoneAuthProvider.getInstance().verifyPhoneNumber( 
+                phoneNumber, 
+                </span><span class="s4">60</span><span class="s1">, 
+                TimeUnit.SECONDS, 
+                </span><span class="s0">this</span><span class="s1">, 
+                verificationCallbacks, 
+                resendToken); 
+    } 
+ 
+    </span><span class="s0">public void </span><span class="s1">signOut(View view) { 
+        fbAuth.signOut(); 
+        statusText.setText(</span><span class="s2">&quot;Signed Out&quot;</span><span class="s1">); 
+        signoutButton.setEnabled(</span><span class="s0">false</span><span class="s1">); 
+        sendButton.setEnabled(</span><span class="s0">true</span><span class="s1">); 
+    } 
+ 
+}</span></pre>
+</body>
+</html>
